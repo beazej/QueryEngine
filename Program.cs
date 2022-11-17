@@ -65,7 +65,14 @@ namespace QueryEngine
                 foreach (String s in query)
                 {
                     String name = char.ToUpper(s[0]) + s.Replace(",", "").Substring(1);
-                    output.Add(o.GetType().GetProperty(name).GetValue(o, null));
+                    try 
+                    {
+                        Object obj = o.GetType().GetProperty(name).GetValue(o, null);
+                        output.Add(obj);
+                    }
+                    catch(Exception e) 
+                    { }
+
                 }
                     
             return output;
@@ -93,6 +100,7 @@ namespace QueryEngine
         {
             List<User> users = new List<User>();
             users.Add(new User("email", "name", 40));
+            users.Add(new User("email2", "name2", 50));
             List<Order> orders = new List<Order>();
             orders.Add(new Order(0, "a"));
             Data data = new Data(users, orders);
