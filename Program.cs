@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 
 namespace QueryEngine
 {
@@ -10,7 +12,7 @@ namespace QueryEngine
         {
             Users = users;
             Orders = orders;
-        }   
+        }
     }
 
     public class User
@@ -24,6 +26,7 @@ namespace QueryEngine
             FullName = fullName;
             Age = age;
         }
+     
     }
 
     public class Order
@@ -41,7 +44,14 @@ namespace QueryEngine
     {
         static List<Object> From(Data data, string query)
         {
-            List<Object> list= new List<Object>();
+            List<Object> list = new List<Object>();
+            if (query.Equals("Users"))
+                foreach (User user in data.Users)
+                    list.Add(user);
+            else if (query.Equals("Orders"))
+                foreach (Order order in data.Orders)
+                    list.Add(order);
+
             return list;
         }
         static List<Object> Where(List<Object> list, string[] query)
@@ -50,9 +60,17 @@ namespace QueryEngine
         }
         static List<Object> Select(List<Object> list, string[] query)
         {
-            return list;
+            List<Object> output = new List<Object>();
+            foreach (Object o in list)
+                foreach (String s in query)
+                {
+                    String name = char.ToUpper(s[0]) + s.Replace(",", "").Substring(1);
+                    output.Add(o.GetType().GetProperty(name).GetValue(o, null));
+                }
+                    
+            return output;
         }
-        static string SQLInterpreter(Data data, string query)
+        static List<Object> SQLInterpreter(Data data, string query)
         {
             string[] elements = query.Split(' ');
             int ids=0;
@@ -69,7 +87,7 @@ namespace QueryEngine
             string[] selectquery = new string[elements.Length - ids - 1];
             Array.Copy(elements, ids + 1, selectquery, 0, elements.Length - ids - 1);
             List<Object> output = Select(Where(From(data, fromquery), wherequery), selectquery);
-            return output.ToString() ?? "null";
+            return output;
         }
         static void Main(string[] args)
         {
@@ -78,8 +96,9 @@ namespace QueryEngine
             List<Order> orders = new List<Order>();
             orders.Add(new Order(0, "a"));
             Data data = new Data(users, orders);
-            string query = "from Users where age=40 select email";
-            Console.WriteLine(SQLInterpreter(data, query));
+            string query = "from Users where age=40 select email, age";
+            foreach(Object o in SQLInterpreter(data, query))
+                Console.WriteLine(o);
         }
     }
 }
